@@ -1,0 +1,17 @@
+[package]
+name = "whoau"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.56"
+authors = ["Goda <goda.choe@tridge.com>"]
+description = "Multi threading channel-based chat app"
+readme = "README.md"
+publish = false
+
+[profile.release]
+lto = true
+panic = "abort"
+strip = "debuginfo"
+
+[dependencies]
+
