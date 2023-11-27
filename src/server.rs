@@ -4,6 +4,7 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
 use whoau::{Client, ClientID, Message, Setting};
+use Packet::{ClientJoined, ClientLeft, MessageReceived};
 
 enum Packet {
     ClientJoined(Client),
@@ -12,46 +13,53 @@ enum Packet {
 }
 
 fn serve(mut client: Client, sender: Sender<Packet>) {
-    loop {
-        let received = client.receive();
-        match received {
-            Some(message) => {
-                print!("{}", message);
-                let packet = Packet::MessageReceived {
-                    id: client.id,
-                    message,
-                };
-                sender.send(packet).unwrap();
-            }
-            None => {
-                let packet = Packet::ClientLeft { id: client.id };
-                sender.send(packet).unwrap();
-                break;
-            }
+    while let Some(message) = client.receive() {
+        let packet = MessageReceived {
+            id: client.id,
+            message,
+        };
+        sender.send(packet).unwrap();
+    }
+    let packet = ClientLeft { id: client.id };
+    sender.send(packet).unwrap();
+}
+
+fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
+    let id = client.id;
+    let message = "Client joined".to_string();
+    clients.insert(client.id, client);
+    for client in clients.values_mut() {
+        client.send(&message);
+    }
+    print!("{} {}", message, id);
+}
+
+fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
+    let message = format!("Client left {}", id);
+    for client in clients.values_mut() {
+        client.send(&message);
+    }
+    clients.remove(&id);
+    print!("{}", message);
+}
+
+fn relay(id: ClientID, message: Message, clients: &mut HashMap<ClientID, Client>) {
+    for (client_id, client) in clients {
+        if id != *client_id {
+            client.send(&message);
         }
     }
+    print!("{}, {}", id, message);
 }
 
 fn broadcast(receiver: Receiver<Packet>) {
     let mut clients = HashMap::<ClientID, Client>::new();
     for packet in receiver {
         match packet {
-            Packet::ClientJoined(client) => {
-                println!("Client joined {}", client.id);
-                clients.insert(client.id, client);
-            }
-            Packet::ClientLeft { id } => {
-                println!("Client left {}", id);
-                clients.remove(&id);
-            }
-            Packet::MessageReceived { id, message } => {
-                for (client_id, client) in &mut clients {
-                    if id != *client_id {
-                        client.send(&message);
-                    }
-                }
-            }
-        }
+            ClientJoined(client) => join(client, &mut clients),
+            ClientLeft { id } => leave(id, &mut clients),
+            MessageReceived { id, message } => relay(id, message, &mut clients),
+        };
     }
 }
 
@@ -64,7 +72,7 @@ pub fn run(setting: &Setting) {
         let stream = stream.unwrap();
         let sender = sender.clone();
         let client = Client::new(&stream);
-        sender.send(Packet::ClientJoined(client.clone())).unwrap();
+        sender.send(ClientJoined(client.clone())).unwrap();
         thread::spawn(move || serve(client.clone(), sender));
     }
 }
