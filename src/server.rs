@@ -1,10 +1,9 @@
 use std::collections::HashMap;
-use std::net::Ipv4Addr;
-use std::net::{SocketAddr, TcpListener};
+use std::net::TcpListener;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
-use whoau::{Client, ClientID, Message};
+use whoau::{Client, ClientID, Message, Setting};
 
 enum Packet {
     ClientJoined(Client),
@@ -56,10 +55,8 @@ fn broadcast(receiver: Receiver<Packet>) {
     }
 }
 
-pub fn run(ip: Ipv4Addr, port: String) {
-    let port = port.parse().expect("Wrong format");
-    let addr = SocketAddr::from((ip, port));
-    let listener = TcpListener::bind(addr).unwrap();
+pub fn run(setting: &Setting) {
+    let listener = TcpListener::bind(setting.addr).unwrap();
     println!("Server is listening on {}", listener.local_addr().unwrap());
     let (sender, receiver) = mpsc::channel::<Packet>();
     thread::spawn(|| broadcast(receiver));

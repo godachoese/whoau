@@ -1,5 +1,7 @@
 pub use client::{Client, ClientID};
+pub use setting::Setting;
 
 pub mod client;
+pub mod setting;
 
 pub type Message = String;
