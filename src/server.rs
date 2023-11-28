@@ -26,7 +26,7 @@ fn serve(mut client: Client, sender: Sender<Packet>) {
 
 fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
     let id = client.id;
-    let message = "Client joined".to_string();
+    let message = "Client joined\n".to_string();
     clients.insert(client.id, client);
     for client in clients.values_mut() {
         client.send(&message);
@@ -35,7 +35,7 @@ fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
 }
 
 fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
-    let message = format!("Client left {}", id);
+    let message = format!("Client left {}\n", id);
     for client in clients.values_mut() {
         client.send(&message);
     }
