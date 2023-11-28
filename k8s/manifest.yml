@@ -1,0 +1,65 @@
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: whoau
+---
+
+# Configmap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: whoau
+  name: whoau-map
+data:
+  WHOAU_PORT: "9999"
+---
+
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: whoau
+  name: whoau-deploy
+  labels:
+    app: whoau
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whoau
+  template:
+    metadata:
+      labels:
+        app: whoau
+    spec:
+      containers:
+        - name: whoau-pod
+          image: godaaaa/whoau:test
+          env:
+            - name: WHOAU_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: whoau-map
+                  key: WHOAU_PORT
+          ports:
+            - containerPort: 9999
+---
+
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: whoau
+  name: whoau-svc
+  labels:
+    app: whoau
+spec:
+  type: NodePort
+  selector:
+    app: whoau
+  ports:
+    - port: 9999 # service port
+      targetPort: 9999 # pod port
+      nodePort: 30003 # node port
+      protocol: TCP
