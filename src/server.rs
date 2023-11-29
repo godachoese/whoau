@@ -25,31 +25,35 @@ fn serve(mut client: Client, sender: Sender<Packet>) {
 }
 
 fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
-    let id = client.id;
-    let message = "Client joined\n".to_string();
+    let message = format!("{} joined\n", client);
+    print!("{}-> {}", client.id, message,);
     clients.insert(client.id, client);
     for client in clients.values_mut() {
         client.send(&message);
     }
-    print!("{} {}", message, id);
 }
 
 fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
-    let message = format!("Client left {}\n", id);
-    for client in clients.values_mut() {
-        client.send(&message);
+    if let Some(client) = clients.get(&id) {
+        let message = format!("{} left\n", client);
+        print!("{}-> {}", client.id, message);
+        for client in clients.values_mut() {
+            client.send(&message);
+        }
+        clients.remove(&id);
     }
-    clients.remove(&id);
-    print!("{}", message);
 }
 
 fn relay(id: ClientID, message: Message, clients: &mut HashMap<ClientID, Client>) {
-    for (client_id, client) in clients {
-        if id != *client_id {
-            client.send(&message);
+    if let Some(client) = clients.get(&id) {
+        let message = format!("no.{} : {}", client.no, message);
+        for (client_id, client) in clients {
+            if id != *client_id {
+                client.send(&message);
+            }
         }
+        print!("{}-> {}", id, message);
     }
-    print!("{}, {}", id, message);
 }
 
 fn broadcast(receiver: Receiver<Packet>) {
@@ -68,10 +72,10 @@ pub fn run(setting: &Setting) {
     println!("Server is listening on {}", listener.local_addr().unwrap());
     let (sender, receiver) = mpsc::channel::<Packet>();
     thread::spawn(|| broadcast(receiver));
-    for stream in listener.incoming() {
+    for (no, stream) in listener.incoming().enumerate() {
         let stream = stream.unwrap();
         let sender = sender.clone();
-        let client = Client::new(&stream);
+        let client = Client::new(no, &stream);
         sender.send(ClientJoined(client.clone())).unwrap();
         thread::spawn(move || serve(client.clone(), sender));
     }
