@@ -3,8 +3,7 @@ use std::net::TcpListener;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
-use chrono::Local;
-
+use whoau::timezone;
 use whoau::{Client, ClientID, Message, Setting};
 use Packet::{ClientJoined, ClientLeft, MessageReceived};
 
@@ -31,7 +30,7 @@ fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
         "######################################\n\
         {} joined\n\
         {} clients are in `Who Are You` now!\n\
-        ~~Please stay tuned\n\
+        Please stay tuned\n\
         #######################################\n",
         client,
         clients.len() + 1,
@@ -56,7 +55,7 @@ fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
 
 fn relay(id: ClientID, message: Message, clients: &mut HashMap<ClientID, Client>) {
     if let Some(client) = clients.get(&id) {
-        let now = Local::now().format("%H:%M:%S");
+        let now = timezone::now_kst();
         let message = format!(
             "{}    #no.{}|{}\n",
             message.trim_end_matches('\n'),
