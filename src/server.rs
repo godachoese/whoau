@@ -3,6 +3,8 @@ use std::net::TcpListener;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
+use chrono::Local;
+
 use whoau::{Client, ClientID, Message, Setting};
 use Packet::{ClientJoined, ClientLeft, MessageReceived};
 
@@ -36,7 +38,7 @@ fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
 fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
     if let Some(client) = clients.get(&id) {
         let message = format!("{} left\n", client);
-        print!("{}-> {}", client.id, message);
+        print!("{} | {}", client.id, message);
         for client in clients.values_mut() {
             client.send(&message);
         }
@@ -46,13 +48,14 @@ fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
 
 fn relay(id: ClientID, message: Message, clients: &mut HashMap<ClientID, Client>) {
     if let Some(client) = clients.get(&id) {
-        let message = format!("no.{} : {}", client.no, message);
+        let now = Local::now().format("%H:%M:%S");
+        let message = format!("{}    #no.{}|{}\n", message.trim(), client.no, now);
         for (client_id, client) in clients {
             if id != *client_id {
                 client.send(&message);
             }
         }
-        print!("{}-> {}", id, message);
+        print!("{} -> {}", id, message);
     }
 }
 
