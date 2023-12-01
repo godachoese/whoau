@@ -23,17 +23,12 @@ impl Client {
     }
     pub fn receive(&mut self) -> Option<Message> {
         let mut buffer = vec![0; 1024];
-        let read = self.stream.read(&mut buffer);
-        match read {
-            Ok(n) => match n {
-                0 => None,
-                _ => match Message::from_utf8(buffer) {
-                    Ok(message) => Some(message),
-                    Err(_) => None,
-                },
-            },
-            Err(_) => None,
+        let read = self.stream.read(&mut buffer).ok()?;
+        if read == 0 {
+            return None;
         }
+        let trimmed = buffer[..read].to_vec();
+        Message::from_utf8(trimmed).ok()
     }
 }
 
