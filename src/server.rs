@@ -27,7 +27,15 @@ fn serve(mut client: Client, sender: Sender<Packet>) {
 }
 
 fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
-    let message = format!("{} joined\n", client);
+    let message = format!(
+        "######################################\n\
+        {} joined\n\
+        {} clients are in `Who Are You` now!\n\
+        ~~Please stay tuned\n\
+        #######################################\n",
+        client,
+        clients.len() + 1,
+    );
     print!("{}-> {}", client.id, message,);
     clients.insert(client.id, client);
     for client in clients.values_mut() {
