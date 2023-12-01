@@ -1,6 +1,6 @@
 [package]
 name = "whoau"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 rust-version = "1.73.0"
 authors = ["Goda <goda.choe@tridge.com>"]

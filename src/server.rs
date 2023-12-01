@@ -57,7 +57,12 @@ fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
 fn relay(id: ClientID, message: Message, clients: &mut HashMap<ClientID, Client>) {
     if let Some(client) = clients.get(&id) {
         let now = Local::now().format("%H:%M:%S");
-        let message = format!("{}    #no.{}|{}\n", message.trim(), client.no, now);
+        let message = format!(
+            "{}    #no.{}|{}\n",
+            message.trim_end_matches('\n'),
+            client.no,
+            now
+        );
         for (client_id, client) in clients {
             if id != *client_id {
                 client.send(&message);
