@@ -214,7 +214,7 @@ checksum = "7ab9b36309365056cd639da3134bf87fa8f3d86008abf99e612384a6eecd459f"
 
 [[package]]
 name = "whoau"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "chrono",
 ]

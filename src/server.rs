@@ -67,7 +67,7 @@ fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>, logs: &mut Vec<M
     }
 }
 
-const PADDING: usize = 30;
+const PADDING: usize = 50;
 
 fn relay(
     id: ClientID,
