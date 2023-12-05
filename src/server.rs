@@ -26,44 +26,55 @@ fn serve(mut client: Client, sender: Sender<Packet>) {
     sender.send(packet).unwrap();
 }
 
-const BREAK: &str = "################################################";
+const BREAK_BEGIN: &str = "################################################";
+const BREAK_END: &str = "================================================";
 
-fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
+fn join(mut client: Client, clients: &mut HashMap<ClientID, Client>, logs: &mut Vec<Message>) {
     let message = format!(
-        "{BREAK}\n\
+        "{BREAK_BEGIN}\n\
         {} joined\n\
         {} clients are in `Who Are You` now!\n\
         Please stay tuned\n\
-        {BREAK}\n",
+        {BREAK_END}\n",
         client,
         clients.len() + 1
     );
     print!("{}-> {}", client.id, message,);
-    clients.insert(client.id, client);
     for client in clients.values_mut() {
         client.send(&message);
     }
+    logs.push(message);
+    for log in logs {
+        client.send(log)
+    }
+    clients.insert(client.id, client);
 }
 
-fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
+fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>, logs: &mut Vec<Message>) {
     if let Some(client) = clients.get(&id) {
         let message = format!(
-            "{BREAK}\n\
+            "{BREAK_BEGIN}\n\
             {} left\n\
-            {BREAK}\n",
+            {BREAK_END}\n",
             client,
         );
         print!("{} | {}", client.id, message);
         for client in clients.values_mut() {
             client.send(&message);
         }
+        logs.push(message);
         clients.remove(&id);
     }
 }
 
 const PADDING: usize = 30;
 
-fn relay(id: ClientID, message: Message, clients: &mut HashMap<ClientID, Client>) {
+fn relay(
+    id: ClientID,
+    message: Message,
+    clients: &mut HashMap<ClientID, Client>,
+    logs: &mut Vec<Message>,
+) {
     if let Some(client) = clients.get(&id) {
         let message = text::align(message.trim(), Direction::Left, PADDING);
         let now = timezone::now_kst();
@@ -74,16 +85,18 @@ fn relay(id: ClientID, message: Message, clients: &mut HashMap<ClientID, Client>
             }
         }
         print!("{} -> {}", id, message);
+        logs.push(message);
     }
 }
 
 fn broadcast(receiver: Receiver<Packet>) {
+    let mut logs = Vec::<Message>::new();
     let mut clients = HashMap::<ClientID, Client>::new();
     for packet in receiver {
         match packet {
-            ClientJoined(client) => join(client, &mut clients),
-            ClientLeft { id } => leave(id, &mut clients),
-            MessageReceived { id, message } => relay(id, message, &mut clients),
+            ClientJoined(client) => join(client, &mut clients, &mut logs),
+            ClientLeft { id } => leave(id, &mut clients, &mut logs),
+            MessageReceived { id, message } => relay(id, message, &mut clients, &mut logs),
         };
     }
 }
