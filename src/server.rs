@@ -3,6 +3,7 @@ use std::net::TcpListener;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
+use whoau::text::{self, Direction};
 use whoau::timezone;
 use whoau::{Client, ClientID, Message, Setting};
 use Packet::{ClientJoined, ClientLeft, MessageReceived};
@@ -25,15 +26,17 @@ fn serve(mut client: Client, sender: Sender<Packet>) {
     sender.send(packet).unwrap();
 }
 
+const BREAK: &str = "################################################";
+
 fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
     let message = format!(
-        "######################################\n\
+        "{BREAK}\n\
         {} joined\n\
         {} clients are in `Who Are You` now!\n\
         Please stay tuned\n\
-        #######################################\n",
+        {BREAK}\n",
         client,
-        clients.len() + 1,
+        clients.len() + 1
     );
     print!("{}-> {}", client.id, message,);
     clients.insert(client.id, client);
@@ -44,7 +47,12 @@ fn join(client: Client, clients: &mut HashMap<ClientID, Client>) {
 
 fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
     if let Some(client) = clients.get(&id) {
-        let message = format!("{} left\n", client);
+        let message = format!(
+            "{BREAK}\n\
+            {} left\n\
+            {BREAK}\n",
+            client,
+        );
         print!("{} | {}", client.id, message);
         for client in clients.values_mut() {
             client.send(&message);
@@ -53,15 +61,13 @@ fn leave(id: ClientID, clients: &mut HashMap<ClientID, Client>) {
     }
 }
 
+const PADDING: usize = 30;
+
 fn relay(id: ClientID, message: Message, clients: &mut HashMap<ClientID, Client>) {
     if let Some(client) = clients.get(&id) {
+        let message = text::align(message.trim(), Direction::Left, PADDING);
         let now = timezone::now_kst();
-        let message = format!(
-            "{}    #no.{}|{}\n",
-            message.trim_end_matches('\n'),
-            client.no,
-            now
-        );
+        let message = format!("{}    #no.{}|{}\n", message, client.no, now);
         for (client_id, client) in clients {
             if id != *client_id {
                 client.send(&message);

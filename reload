@@ -1,0 +1,7 @@
+#!/bin/sh
+kubectl delete -f k8s/manifest.yml &
+KUBECTL_DELETE_PID=$!
+docker build -t godaaaa/whoau:test .
+docker push godaaaa/whoau:test
+wait $KUBECTL_DELETE_PID
+kubectl apply -f k8s/manifest.yml
