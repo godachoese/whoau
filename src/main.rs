@@ -1,8 +1,6 @@
-use whoau::Setting;
-
-mod server;
+use whoau::setting::Setting;
 
 fn main() {
     let setting = Setting::default();
-    server::run(&setting);
+    whoau::run(&setting);
 }

@@ -5,3 +5,4 @@ docker build -t godaaaa/whoau:test .
 docker push godaaaa/whoau:test
 wait $KUBECTL_DELETE_PID
 kubectl apply -f k8s/manifest.yml
+kubectl logs -l app=whoau --all-containers=true -f
